@@ -1,25 +1,42 @@
-name: Build Windows EXE
+name: Build Phantom
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        configuration: [Release]
+        platform: [x64]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build
-        run: |
-          msbuild Phantom.sln /p:Configuration=Release
+      - name: Restore NuGet packages
+        run: nuget restore Phantom.sln
+
+      - name: Build Solution
+        run: >
+          msbuild Phantom.sln
+          /p:Configuration=${{ matrix.configuration }}
+          /p:Platform=${{ matrix.platform }}
+          /m
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: WindowsEXE
+          name: Phantom-Release-x64
           path: |
+            **/x64/Release/*.exe
             **/Release/*.exe
