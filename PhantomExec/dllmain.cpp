@@ -12,7 +12,7 @@ namespace Phantom {
 
     PhantomCore* g_executor = nullptr;
 
-    void InitializationThread() {
+    DWORD WINAPI InitializationThread(LPVOID lpParam) {
         std::cout << "\n╔═══════════════════════════════════════╗" << std::endl;
         std::cout << "║   Phantom Executor - DLL Loaded      ║" << std::endl;
         std::cout << "║   Version 1.0.0                      ║" << std::endl;
@@ -98,6 +98,7 @@ namespace Phantom {
         std::cout << "[DllMain] ║  Myriad: Valid                    ║" << std::endl;
         std::cout << "[DllMain] ║  IPC: Active                      ║" << std::endl;
         std::cout << "[DllMain] ╚════════════════════════════════════╝\n" << std::endl;
+        return 0;
     }
 }
 
@@ -105,10 +106,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     switch (ul_reason_for_call) {
         case DLL_PROCESS_ATTACH: {
             DisableThreadLibraryCalls(hModule);
-            CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)[]() {
-                Phantom::InitializationThread();
-                return 0;
-            }, nullptr, 0, nullptr);
+            HANDLE hThread = CreateThread(
+                nullptr,
+                0,
+                (LPTHREAD_START_ROUTINE)Phantom::InitializationThread,
+                nullptr,
+                0,
+                nullptr
+            );
+            if (hThread != nullptr) {
+                CloseHandle(hThread);
+            }
             break;
         }
 
